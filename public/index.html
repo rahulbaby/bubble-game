@@ -234,14 +234,16 @@
 
     // Update leaderboard UI with sorted list
     socket.on('update-leaderboard', (players) => {
-      const playerScores = document.getElementById('player-scores');
-      playerScores.innerHTML = ''; // Clear previous scores
-      players.forEach((player) => {
+    console.log('Received leaderboard update:', players);
+    const leaderboard = document.getElementById('player-scores');
+    leaderboard.innerHTML = '';
+    players.forEach((player) => {
         const li = document.createElement('li');
         li.textContent = `${player.username}: ${player.score}`;
-        playerScores.appendChild(li);
-      });
+        leaderboard.appendChild(li);
     });
+});
+
 
     // Handle mouse clicks
     canvas.addEventListener('click', (e) => {
@@ -255,7 +257,8 @@
         if (bubble.isClicked(mx, my)) {
           playerScore += bubble.points;
           bubble.startExplosion();
-          socket.emit('update-score', { username, score: playerScore });
+          socket.emit('update-score', { username: username.toLowerCase(), score: playerScore });
+
         }
       });
     });
