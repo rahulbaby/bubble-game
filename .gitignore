@@ -2,7 +2,7 @@
 node_modules/
 
 # Exclude package.json and package-lock.json files
-package.json
+
 package-lock.json
 
 # Optional: Exclude environment files and logs
