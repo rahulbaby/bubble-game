@@ -12,18 +12,26 @@
       margin: 0;
       padding: 0;
       display: flex;
-      flex-wrap: wrap;
-      /* Allow the sections to wrap on small screens */
-      justify-content: space-between;
+      justify-content: center;
+      align-items: center;
       height: 100vh;
       background: linear-gradient(135deg, #6a11cb, #2575fc);
       overflow: hidden;
     }
 
+    /* Game and Score Layout */
+    .game-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      max-width: 1200px; /* Prevent from growing too large */
+      width: 100%;
+    }
+
     /* Left Section for Game Canvas */
     #game-section {
-      flex: 1 1 65%;
-      /* 65% width on large screens */
+      flex: 0 1 60%;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -33,15 +41,18 @@
 
     /* Right Section for Player List and Scores */
     #score-section {
-      flex: 1 1 35%;
-      /* 35% width on large screens */
+      flex: 0 1 35%;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: flex-start;
       padding: 20px;
       box-sizing: border-box;
       background-color: rgba(255, 255, 255, 0.2);
       border-left: 2px solid rgba(255, 255, 255, 0.3);
+      max-width: 300px; /* Prevent it from taking too much space */
+      min-width: 200px;
+      border-radius: 8px;
     }
 
     #player-entry {
@@ -50,7 +61,6 @@
       background-color: white;
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      max-width: 200px;
       width: 100%;
       display: flex;
       flex-direction: column;
@@ -118,30 +128,31 @@
       box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.2);
       cursor: pointer;
       max-width: 100%;
-      /* Ensure it fits to screen on small devices */
       height: auto;
     }
 
     /* Media Queries for Responsiveness */
     @media screen and (max-width: 768px) {
+      .game-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+      }
+
       #game-section {
-        flex: 1 1 100%;
-        /* Full width for the canvas on small screens */
+        flex: 0 1 80%;
         padding: 15px;
       }
 
       #score-section {
-        flex: 1 1 100%;
-        /* Full width for score on small screens */
+        flex: 0 1 90%;
         padding: 15px;
         border-left: none;
       }
 
       #game-canvas {
         width: 100%;
-        /* The canvas takes full width */
         height: 300px;
-        /* Make sure the canvas size doesn't overwhelm the small screens */
       }
 
       #player-entry input[type="text"] {
@@ -150,30 +161,16 @@
 
       #player-scores li {
         font-size: 14px;
-        /* Slightly smaller font size for small screens */
       }
 
       #join-game {
         font-size: 12px;
-        /* Smaller button on small screens */
       }
     }
 
     @media screen and (max-width: 480px) {
-      body {
-        flex-direction: column;
-        /* Stack everything vertically on very small screens */
-        align-items: center;
-      }
-
       #game-canvas {
-        width: 100%;
-        /* Canvas becomes fully responsive on smaller screens */
         height: 250px;
-      }
-
-      #player-entry input[type="text"] {
-        font-size: 12px;
       }
 
       #join-game {
@@ -184,23 +181,25 @@
 </head>
 
 <body>
-  <div id="game-section">
-    <canvas id="game-canvas"></canvas>
-  </div>
+  <div class="game-container">
+    <div id="game-section">
+      <canvas id="game-canvas"></canvas>
+    </div>
 
-  <div id="score-section">
-    <div id="player-entry">
-      <input type="text" id="username" placeholder="Enter your name" />
-      <button id="join-game">Join Game</button>
-      <div>
-        <p style="color: #000000; font-size:7.5px;">Changing window will disconnect the game</p>
+    <div id="score-section">
+      <div id="player-entry">
+        <input type="text" id="username" placeholder="Enter your name" />
+        <button id="join-game">Join Game</button>
+        <div>
+          <p style="color: #000000; font-size:7.5px;">Changing window will disconnect the game</p>
+        </div>
       </div>
-    </div>
 
-    <div>
-      <p style="color: #fff; font-size: large;">Ranking</p>
+      <div>
+        <p style="color: #fff; font-size: large;">Ranking</p>
+      </div>
+      <ul id="player-scores"></ul>
     </div>
-    <ul id="player-scores"></ul>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
