@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,25 +12,45 @@
       margin: 0;
       padding: 0;
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      flex-wrap: wrap;
+      /* Allow the sections to wrap on small screens */
+      justify-content: space-between;
       height: 100vh;
-      background:linear-gradient(135deg, #6a11cb, #2575fc);;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
       overflow: hidden;
     }
 
-    /* Smaller Join Game Modal */
+    /* Left Section for Game Canvas */
+    #game-section {
+      flex: 1 1 65%;
+      /* 65% width on large screens */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    /* Right Section for Player List and Scores */
+    #score-section {
+      flex: 1 1 35%;
+      /* 35% width on large screens */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-left: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
     #player-entry {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      margin-bottom: 20px;
       padding: 20px 30px;
       background-color: white;
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      max-width: 150px;  /* Reduced width */
+      max-width: 200px;
       width: 100%;
       display: flex;
       flex-direction: column;
@@ -37,14 +58,13 @@
       transition: all 0.3s ease-out;
     }
 
-    /* Smaller Input Style */
     input[type="text"] {
       width: 100%;
       padding: 12px;
-      margin-bottom: 15px;  /* Reduced margin */
+      margin-bottom: 15px;
       border-radius: 8px;
       border: 2px solid #d0e1f2;
-      font-size: 13px;  /* Smaller font size */
+      font-size: 13px;
       outline: none;
       background-color: #f9fbff;
       transition: all 0.3s ease;
@@ -55,14 +75,13 @@
       background-color: #eef5ff;
     }
 
-    /* Stylish Smaller Button */
     #join-game {
-      padding: 8px 20px;  /* Smaller padding */
+      padding: 8px 20px;
       background: linear-gradient(145deg, #007bff, #005dff);
       border: none;
-      border-radius: 25px;  /* Slightly rounded for a neat look */
+      border-radius: 25px;
       color: white;
-      font-size: 14px;  /* Smaller font size */
+      font-size: 14px;
       cursor: pointer;
       transition: 0.3s;
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
@@ -73,13 +92,13 @@
       transform: scale(1.05);
     }
 
-    /* Modern Player Score Board */
     #player-scores {
       list-style-type: none;
       padding: 0;
       margin-top: 20px;
       font-size: 14px;
       text-align: center;
+      width: 100%;
     }
 
     #player-scores li {
@@ -92,26 +111,95 @@
       background-color: #f0f4fd;
     }
 
-    /* Canvas styling for the Game */
     #game-canvas {
       background-color: #000000;
       border: 2px solid #fff;
       border-radius: 8px;
       box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.2);
-      margin-top: 30px;
       cursor: pointer;
+      max-width: 100%;
+      /* Ensure it fits to screen on small devices */
+      height: auto;
+    }
+
+    /* Media Queries for Responsiveness */
+    @media screen and (max-width: 768px) {
+      #game-section {
+        flex: 1 1 100%;
+        /* Full width for the canvas on small screens */
+        padding: 15px;
+      }
+
+      #score-section {
+        flex: 1 1 100%;
+        /* Full width for score on small screens */
+        padding: 15px;
+        border-left: none;
+      }
+
+      #game-canvas {
+        width: 100%;
+        /* The canvas takes full width */
+        height: 300px;
+        /* Make sure the canvas size doesn't overwhelm the small screens */
+      }
+
+      #player-entry input[type="text"] {
+        font-size: 14px;
+      }
+
+      #player-scores li {
+        font-size: 14px;
+        /* Slightly smaller font size for small screens */
+      }
+
+      #join-game {
+        font-size: 12px;
+        /* Smaller button on small screens */
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body {
+        flex-direction: column;
+        /* Stack everything vertically on very small screens */
+        align-items: center;
+      }
+
+      #game-canvas {
+        width: 100%;
+        /* Canvas becomes fully responsive on smaller screens */
+        height: 250px;
+      }
+
+      #player-entry input[type="text"] {
+        font-size: 12px;
+      }
+
+      #join-game {
+        font-size: 10px;
+      }
     }
   </style>
 </head>
+
 <body>
-  <div id="player-entry">
-    <input type="text" id="username" placeholder="Enter your name" />
-    <button id="join-game">Join Game</button>
+  <div id="game-section">
+    <canvas id="game-canvas"></canvas>
   </div>
 
-  <canvas id="game-canvas"></canvas>
+  <div id="score-section">
+    <div id="player-entry">
+      <input type="text" id="username" placeholder="Enter your name" />
+      <button id="join-game">Join Game</button>
+      <div>
+        <p style="color: #000000; font-size:7.5px;">Changing window will disconnect the game</p>
+      </div>
+    </div>
 
-  <div>
+    <div>
+      <p style="color: #fff; font-size: large;">Ranking</p>
+    </div>
     <ul id="player-scores"></ul>
   </div>
 
@@ -130,7 +218,6 @@
     let hoveredBubble = null;
     let playerJoined = false;
 
-    // Bubble class
     class Bubble {
       constructor(x, y, type) {
         this.x = x;
@@ -205,7 +292,6 @@
       }
     }
 
-    // Spawn a new bubble
     function spawnBubble() {
       const x = Math.random() * canvas.width;
       const y = 0;
@@ -214,7 +300,6 @@
       bubbles.push(new Bubble(x, y, type));
     }
 
-    // Check username availability before joining the game
     document.getElementById('join-game').addEventListener('click', () => {
       const inputUsername = document.getElementById('username').value.trim();
       if (inputUsername && !playerJoined) {
@@ -232,22 +317,18 @@
       }
     });
 
-    // Update leaderboard UI with sorted list
     socket.on('update-leaderboard', (players) => {
-    console.log('Received leaderboard update:', players);
-    const leaderboard = document.getElementById('player-scores');
-    leaderboard.innerHTML = '';
-    players.forEach((player) => {
+      const leaderboard = document.getElementById('player-scores');
+      leaderboard.innerHTML = '';
+      players.forEach((player) => {
         const li = document.createElement('li');
         li.textContent = `${player.username}: ${player.score}`;
         leaderboard.appendChild(li);
+      });
     });
-});
 
-
-    // Handle mouse clicks
     canvas.addEventListener('click', (e) => {
-      if (!playerJoined) return; // Ensure the player is joined before interacting
+      if (!playerJoined) return;
 
       const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
@@ -258,12 +339,10 @@
           playerScore += bubble.points;
           bubble.startExplosion();
           socket.emit('update-score', { username: username.toLowerCase(), score: playerScore });
-
         }
       });
     });
 
-    // Game loop
     function gameLoop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (Math.random() < 0.03) spawnBubble();
@@ -277,4 +356,5 @@
     gameLoop();
   </script>
 </body>
+
 </html>

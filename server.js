@@ -55,17 +55,17 @@ io.on('connection', (socket) => {
     // Find and update the correct player's score
     const playerIndex = players.findIndex((p) => p.username === data.username);
     if (playerIndex !== -1) {
-        players[playerIndex].score = data.score;
-        
-        // Log the scores for debugging
-        console.log('Updated player scores:', players);
+      players[playerIndex].score = data.score;
 
-        // Emit updated leaderboard to all clients
-        io.emit('update-leaderboard', sortPlayers());
+      // Log the scores for debugging
+      console.log('Updated player scores:', players);
+
+      // Emit updated leaderboard to all clients
+      io.emit('update-leaderboard', sortPlayers());
     } else {
-        console.error(`Player not found: ${data.username}`);
+      console.error(`Player not found: ${data.username}`);
     }
-});
+  });
 
   // Handle player disconnection (game exit on reload or manually disconnect)
   socket.on('disconnect', () => {
