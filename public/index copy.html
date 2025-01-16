@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bubble Popping Game</title>
+  <style>
+    /* General Body Styles */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      ;
+      overflow: hidden;
+    }
+
+    /* Smaller Join Game Modal */
+    #player-entry {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px 30px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      max-width: 150px;
+      /* Reduced width */
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.3s ease-out;
+    }
+
+    /* Smaller Input Style */
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      /* Reduced margin */
+      border-radius: 8px;
+      border: 2px solid #d0e1f2;
+      font-size: 13px;
+      /* Smaller font size */
+      outline: none;
+      background-color: #f9fbff;
+      transition: all 0.3s ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: #005dff;
+      background-color: #eef5ff;
+    }
+
+    /* Stylish Smaller Button */
+    #join-game {
+      padding: 8px 20px;
+      /* Smaller padding */
+      background: linear-gradient(145deg, #007bff, #005dff);
+      border: none;
+      border-radius: 25px;
+      /* Slightly rounded for a neat look */
+      color: white;
+      font-size: 14px;
+      /* Smaller font size */
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #join-game:hover {
+      background: linear-gradient(145deg, #005dff, #007bff);
+      transform: scale(1.05);
+    }
+
+    /* Modern Player Score Board */
+    #player-scores {
+      list-style-type: none;
+      padding: 0;
+      margin-top: 20px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    #player-scores li {
+      padding: 5px 0;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    #player-scores li:nth-child(odd) {
+      background-color: #f0f4fd;
+    }
+
+    /* Canvas styling for the Game */
+    #game-canvas {
+      background-color: #000000;
+      border: 2px solid #fff;
+      border-radius: 8px;
+      box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.2);
+      margin-top: 30px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="player-entry">
+    <input type="text" id="username" placeholder="Enter your name" />
+    <button id="join-game">Join Game</button>
+    <div>
+      <p style="color: #000000; font-size:7.5px; ">Changing window will disconnect the game</p>
+    </div>
+  </div>
+
+
+  <canvas id="game-canvas"></canvas>
+
+  <div>
+    <div>
+      <p style="color: #fff; font-size: large; ">Ranking</p>
+    </div>
+    <ul id="player-scores"></ul>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    let username = null;
+    let canvas = document.getElementById('game-canvas');
+    let ctx = canvas.getContext('2d');
+    canvas.width = 400;
+    canvas.height = 600;
+
+    const bubbles = [];
+    let playerScore = 0;
+    let hoveredBubble = null;
+    let playerJoined = false;
+
+    // Bubble class
+    class Bubble {
+      constructor(x, y, type) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.radius = 30;
+        this.points = type === 'green' ? 1 : type === 'yellow' ? 2 : 5;
+        this.dy = 1 + Math.random() * 1.5;
+        this.opacity = 1;
+        this.blowingUp = false;
+        this.explodeProgress = 0;
+      }
+
+      draw() {
+        if (this.blowingUp) {
+          ctx.save();
+          ctx.globalAlpha = this.opacity;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
+          ctx.fillStyle = this.type === 'green' ? '#8EF5A3' : this.type === 'yellow' ? '#FFEB77' : '#FF9494';
+          ctx.fill();
+          ctx.restore();
+          return;
+        }
+
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.type === 'green' ? '#8EF5A3' : this.type === 'yellow' ? '#FFEB77' : '#FF9494';
+        ctx.fill();
+
+        if (hoveredBubble === this) {
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+        } else {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+
+      update() {
+        if (this.blowingUp) {
+          this.explodeProgress += 0.1;
+          this.radius += this.explodeProgress;
+          this.opacity -= 0.05;
+          if (this.opacity <= 0) {
+            return false;
+          }
+        } else {
+          this.y += this.dy;
+        }
+        return true;
+      }
+
+      isClicked(mx, my) {
+        const distance = Math.hypot(this.x - mx, this.y - my);
+        return distance <= this.radius;
+      }
+
+      startExplosion() {
+        if (!this.blowingUp) {
+          this.blowingUp = true;
+          this.explodeProgress = 5;
+          this.opacity = 1;
+        }
+      }
+
+      isHovered(mx, my) {
+        const distance = Math.hypot(this.x - mx, this.y - my);
+        return distance <= this.radius;
+      }
+    }
+
+    // Spawn a new bubble
+    function spawnBubble() {
+      const x = Math.random() * canvas.width;
+      const y = 0;
+      const types = ['green', 'yellow', 'red'];
+      const type = types[Math.floor(Math.random() * types.length)];
+      bubbles.push(new Bubble(x, y, type));
+    }
+
+    // Check username availability before joining the game
+    document.getElementById('join-game').addEventListener('click', () => {
+      const inputUsername = document.getElementById('username').value.trim();
+      if (inputUsername && !playerJoined) {
+        socket.emit('check-username', { username: inputUsername }, (response) => {
+          if (response.isAvailable) {
+            playerJoined = true;
+            username = inputUsername;
+            socket.emit('join', { username });
+
+            document.getElementById('player-entry').style.display = 'none';
+          } else {
+            alert('Username is already taken, please choose another one!');
+          }
+        });
+      }
+    });
+
+    // Update leaderboard UI with sorted list
+    socket.on('update-leaderboard', (players) => {
+      console.log('Received leaderboard update:', players);
+      const leaderboard = document.getElementById('player-scores');
+      leaderboard.innerHTML = '';
+      players.forEach((player) => {
+        const li = document.createElement('li');
+        li.textContent = `${player.username}: ${player.score}`;
+        leaderboard.appendChild(li);
+      });
+    });
+
+
+    // Handle mouse clicks
+    canvas.addEventListener('click', (e) => {
+      if (!playerJoined) return; // Ensure the player is joined before interacting
+
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+
+      bubbles.forEach((bubble, index) => {
+        if (bubble.isClicked(mx, my)) {
+          playerScore += bubble.points;
+          bubble.startExplosion();
+          socket.emit('update-score', { username: username.toLowerCase(), score: playerScore });
+
+        }
+      });
+    });
+
+    // Game loop
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (Math.random() < 0.03) spawnBubble();
+      for (let i = bubbles.length - 1; i >= 0; i--) {
+        const bubble = bubbles[i];
+        if (!bubble.update()) bubbles.splice(i, 1);
+        else bubble.draw();
+      }
+      requestAnimationFrame(gameLoop);
+    }
+    gameLoop();
+
+    function resizeCanvas() {
+      const minWidth = 400; // Minimum width for the canvas
+      const minHeight = 300; // Minimum height for the canvas
+      canvas.width = Math.max(window.innerWidth * 0.8, minWidth);
+      canvas.height = Math.max(window.innerHeight * 0.7, minHeight);
+    }
+
+
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(resizeCanvas, 100); // Adjust delay as needed
+    });
+
+  </script>
+</body>
+
+</html>
