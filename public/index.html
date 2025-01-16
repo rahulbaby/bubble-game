@@ -17,7 +17,6 @@
       justify-content: center;
       height: 100vh;
       background: linear-gradient(135deg, #6a11cb, #2575fc);
-      ;
       overflow: hidden;
     }
 
@@ -32,7 +31,6 @@
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       max-width: 150px;
-      /* Reduced width */
       width: 100%;
       display: flex;
       flex-direction: column;
@@ -45,11 +43,9 @@
       width: 100%;
       padding: 12px;
       margin-bottom: 15px;
-      /* Reduced margin */
       border-radius: 8px;
       border: 2px solid #d0e1f2;
       font-size: 13px;
-      /* Smaller font size */
       outline: none;
       background-color: #f9fbff;
       transition: all 0.3s ease;
@@ -63,14 +59,11 @@
     /* Stylish Smaller Button */
     #join-game {
       padding: 8px 20px;
-      /* Smaller padding */
       background: linear-gradient(145deg, #007bff, #005dff);
       border: none;
       border-radius: 25px;
-      /* Slightly rounded for a neat look */
       color: white;
       font-size: 14px;
-      /* Smaller font size */
       cursor: pointer;
       transition: 0.3s;
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
@@ -121,11 +114,13 @@
     </div>
   </div>
 
-
   <canvas id="game-canvas"></canvas>
 
   <div>
     <div>
+      <!-- Add a logout button (hidden initially) -->
+      <button id="logout-button" style="display: none;">Logout</button>
+
       <p style="color: #fff; font-size: large; ">Ranking</p>
     </div>
     <ul id="player-scores"></ul>
@@ -138,9 +133,6 @@
     let username = null;
     let canvas = document.getElementById('game-canvas');
     let ctx = canvas.getContext('2d');
-    canvas.width = 400;
-    canvas.height = 600;
-
     const bubbles = [];
     let playerScore = 0;
     let hoveredBubble = null;
@@ -250,7 +242,6 @@
 
     // Update leaderboard UI with sorted list
     socket.on('update-leaderboard', (players) => {
-      console.log('Received leaderboard update:', players);
       const leaderboard = document.getElementById('player-scores');
       leaderboard.innerHTML = '';
       players.forEach((player) => {
@@ -259,7 +250,6 @@
         leaderboard.appendChild(li);
       });
     });
-
 
     // Handle mouse clicks
     canvas.addEventListener('click', (e) => {
@@ -274,7 +264,6 @@
           playerScore += bubble.points;
           bubble.startExplosion();
           socket.emit('update-score', { username: username.toLowerCase(), score: playerScore });
-
         }
       });
     });
@@ -293,17 +282,70 @@
     gameLoop();
 
     function resizeCanvas() {
-      const minWidth = 400; // Minimum width for the canvas
+      const minWidth = 300;  // Minimum width for the canvas
       const minHeight = 300; // Minimum height for the canvas
-      canvas.width = Math.max(window.innerWidth * 0.8, minWidth);
-      canvas.height = Math.max(window.innerHeight * 0.7, minHeight);
+
+      // Get the viewport dimensions
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      // Ensure that the canvas width and height are responsive but respect the minimum size
+      canvas.width = Math.max(viewportWidth * 0.8, minWidth);  // Set width to 80% of viewport, or minimum width
+      canvas.height = Math.max(viewportHeight * 0.6, minHeight); // Set height to 60% of viewport, or minimum height
     }
 
+    // Initialize canvas size on page load
+    resizeCanvas();
 
+    // Resize canvas on window resize event
     let resizeTimeout;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(resizeCanvas, 100); // Adjust delay as needed
+      resizeTimeout = setTimeout(resizeCanvas, 100);
+    });
+
+
+
+    let logoutButton = document.getElementById('logout-button');
+    let joinButton = document.getElementById('join-game');
+    let playerEntryDiv = document.getElementById('player-entry');
+
+    // Handle logout
+    logoutButton.addEventListener('click', () => {
+      // Notify server about the logout
+      socket.emit('logout', { username });
+
+      // Hide the logout button and show the join button again
+      logoutButton.style.display = 'none';
+      playerEntryDiv.style.display = 'flex';
+      username = null;
+      playerJoined = false;
+      playerScore = 0;
+
+      // Reset player-specific game state if needed
+      bubbles.length = 0;  // Clear any active bubbles or game state
+      socket.emit('reset-game');  // Optionally, reset the game on the server
+
+      // Optional: Reset any other game UI (e.g., leaderboard, score, etc.)
+      document.getElementById('player-scores').innerHTML = '';
+    });
+
+    // Show the join button and hide the entry form after the player joins
+    socket.on('player-joined', () => {
+      playerEntryDiv.style.display = 'none';
+      logoutButton.style.display = 'block';  // Show the logout button
+    });
+
+    // After player joins, update leaderboard, and continue with the game logic
+    socket.on('update-leaderboard', (players) => {
+      console.log('Received leaderboard update:', players);
+      const leaderboard = document.getElementById('player-scores');
+      leaderboard.innerHTML = '';
+      players.forEach((player) => {
+        const li = document.createElement('li');
+        li.textContent = `${player.username}: ${player.score}`;
+        leaderboard.appendChild(li);
+      });
     });
 
   </script>
