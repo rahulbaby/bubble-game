@@ -78,9 +78,6 @@ io.on('connection', (socket) => {
         // Send updated leaderboard after sorting by score
         io.emit('update-leaderboard', sortPlayers());
         console.log(`Player ${playerUsername} disconnected.`);
-
-        // Notify all other players about the disconnection
-        io.emit('player-disconnected', { username: playerUsername });
       }
     }
   });

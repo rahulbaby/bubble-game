@@ -233,8 +233,6 @@
             document.getElementById('player-entry').style.display = 'none';
           } else {
             alert('Username is already taken, please choose another one!');
-            console.log('Username is already taken, please choose another one!');
-
           }
         });
       }
@@ -302,17 +300,6 @@
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(resizeCanvas, 100);
-    });
-
-    // Notify all clients when a player disconnects
-    socket.on('player-disconnected', (data) => {
-      alert(`${data.username} is disconnected.`);
-    });
-
-    // Handle the player's own disconnection
-    socket.on('disconnect', () => {
-      alert("You are disconnected.");
-      location.reload(); // Reload the browser for the disconnected player
     });
   </script>
 </body>
