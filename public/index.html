@@ -24,7 +24,6 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
       background: linear-gradient(135deg, #6a11cb, #2575fc);
       overflow: hidden;
     }
@@ -39,7 +38,7 @@
       background-color: white;
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      max-width: 150px;
+      max-width: 300px;
       width: 100%;
       display: flex;
       flex-direction: column;
@@ -96,7 +95,7 @@
     /* Fixed leaderboard styling */
     #leaderboard {
       position: fixed;
-      bottom: 8%;
+      bottom: 24%;
       background-color: rgba(255, 255, 255, 0.8);
       padding: 10px;
       border-radius: 10px;
@@ -125,11 +124,14 @@
 
 <body>
   <div id="player-entry">
+    <div>
+      <h2 style="text-align:center">RULES</h2>
+      <p style="color: #000; font-size:12px;">Locking the mobile or PC screen will result in the game being disconnected.</p>
+      <p style="color: #000; font-size:12px;">If the player disconnects from the game, their score will be reset to zero, and they will be required to restart from the beginning.</p>
+    </div>
     <input type="text" id="username" placeholder="Enter your name" />
     <button id="join-game">Join Game</button>
-    <div>
-      <p style="color: #000; font-size:7.5px;">Changing window will disconnect the game</p>
-    </div>
+    
   </div>
 
   <canvas id="game-canvas"></canvas>
@@ -178,6 +180,7 @@
     let playerJoined = false;
     let hoveredBubble = null;
     let currentRank = 'N/A'; // Initialize current rank
+    let totalPlayers = 0; // Variable to track total number of players
 
     // Load background image
     const backgroundImage = new Image();
@@ -191,6 +194,8 @@
 
     // Update leaderboard UI with top 5 players
     socket.on('update-leaderboard', (players) => {
+      totalPlayers = players.length; // Update total players count
+
       // Sort players by score in descending order
       const sortedPlayers = players.sort((a, b) => b.score - a.score);
 
@@ -219,6 +224,7 @@
       ctx.fillStyle = 'white';
       ctx.clearRect(0, 0, canvas.width, 30); // Clear the top area
       ctx.fillText(`You (Rank ${currentRank}): ${playerScore}`, 10, 20);
+      ctx.fillText(`Total Players: ${totalPlayers}`, canvas.width - 150, 20); // Show total players at the top right
     }
 
     // Bubble class
@@ -351,7 +357,7 @@
 
     function resizeCanvas() {
       const minWidth = 300;  // Minimum width for the canvas
-      const minHeight = 300; // Minimum height for the canvas
+      const minHeight = 400; // Minimum height for the canvas
 
       // Get the viewport dimensions
       const viewportWidth = window.innerWidth;
