@@ -100,6 +100,7 @@
       padding: 10px;
       border-radius: 10px;
       max-width: 200px;
+      display: none; /* Hide leaderboard initially */
     }
 
     #leaderboard p {
@@ -131,7 +132,6 @@
     </div>
     <input type="text" id="username" placeholder="Enter your name" />
     <button id="join-game">Join Game</button>
-    
   </div>
 
   <canvas id="game-canvas"></canvas>
@@ -220,11 +220,11 @@
 
     // Function to draw player's rank and score on the canvas
     function drawPlayerRank() {
-      ctx.font = '20px Arial';
+      ctx.font = '12px Arial';
       ctx.fillStyle = 'white';
       ctx.clearRect(0, 0, canvas.width, 30); // Clear the top area
       ctx.fillText(`You (Rank ${currentRank}): ${playerScore}`, 10, 20);
-      ctx.fillText(`Total Players: ${totalPlayers}`, canvas.width - 150, 20); // Show total players at the top right
+      ctx.fillText(`Total Players: ${totalPlayers}`, canvas.width - 100, 20); // Show total players at the top right
     }
 
     // Bubble class
@@ -307,6 +307,7 @@
             socket.emit('join', { username });
 
             document.getElementById('player-entry').style.display = 'none';
+            document.getElementById('leaderboard').style.display = 'block'; // Show leaderboard after joining
           } else {
             showMessage('Username is already taken, please choose another one!');
             console.log('Username is already taken, please choose another one!');
