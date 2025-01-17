@@ -1,3 +1,4 @@
+<!-- UI IS BETTER THAN index copy 2.html                 player disconnection issue is fixed -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,15 +6,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bubble Popping Game</title>
-
-  <!-- Add Bootstrap CSS -->
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-
-  <!-- Add Bootstrap JS and dependencies -->
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
   <style>
     /* General Body Styles */
     body {
@@ -83,6 +75,25 @@
       transform: scale(1.05);
     }
 
+    /* Modern Player Score Board */
+    #player-scores {
+      list-style-type: none;
+      padding: 0;
+      margin-top: 20px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    #player-scores li {
+      padding: 5px 0;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    #player-scores li:nth-child(odd) {
+      background-color: #f0f4fd;
+    }
+
     /* Canvas styling for the Game */
     #game-canvas {
       background-color: #000000;
@@ -92,35 +103,6 @@
       margin-top: 30px;
       cursor: pointer;
     }
-
-    /* Fixed leaderboard styling */
-    #leaderboard {
-      position: absolute;
-      bottom: 10%;
-      left: 5%;
-      background-color: rgba(255, 255, 255, 0.8);
-      padding: 10px;
-      border-radius: 10px;
-      max-width: 200px;
-    }
-
-    #leaderboard p {
-      color: #000;
-      font-size: large;
-      margin: 0;
-    }
-
-    #player-scores {
-      list-style-type: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    #player-scores li {
-      padding: 5px 0;
-      font-size: 16px;
-      font-weight: bold;
-    }
   </style>
 </head>
 
@@ -129,43 +111,17 @@
     <input type="text" id="username" placeholder="Enter your name" />
     <button id="join-game">Join Game</button>
     <div>
-      <p style="color: #000; font-size:7.5px;">Changing window will disconnect the game</p>
+      <p style="color: #000000; font-size:7.5px; ">Changing window will disconnect the game</p>
     </div>
   </div>
 
   <canvas id="game-canvas"></canvas>
 
-  <!-- Audio for bubble pop effect -->
-  <audio id="bubble-pop-sound" src="bubble-pop.mp3" preload="auto"></audio>
-
-  <!-- Leaderboard -->
-  <div id="leaderboard">
-    <p>Ranking</p>
-    <ul id="player-scores">
-      <!-- Top 5 players will be populated here -->
-    </ul>
-    <p id="current-player-score" style="font-weight: bold;">You: 0</p>
-  </div>
-
-  <!-- Bootstrap Modal -->
-  <div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="messageModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="messageModalLabel">Message</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body" id="modalBody">
-          <!-- Message will be injected here -->
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        </div>
-      </div>
+  <div>
+    <div>
+      <p style="color: #fff; font-size: large; ">Ranking</p>
     </div>
+    <ul id="player-scores"></ul>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
@@ -177,19 +133,8 @@
     let ctx = canvas.getContext('2d');
     const bubbles = [];
     let playerScore = 0;
+    let hoveredBubble = null;
     let playerJoined = false;
-    let hoveredBubble = null; // Move hoveredBubble here
-
-
-    // Load background image
-    const backgroundImage = new Image();
-    backgroundImage.src = 'space.jpg'; // Path to your background image
-
-    // Function to show message in Bootstrap modal
-    function showMessage(message) {
-      document.getElementById('modalBody').textContent = message;
-      $('#messageModal').modal('show');
-    }
 
     // Bubble class
     class Bubble {
@@ -221,9 +166,16 @@
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = this.type === 'green' ? '#8EF5A3' : this.type === 'yellow' ? '#FFEB77' : '#FF9494';
         ctx.fill();
-        ctx.strokeStyle = hoveredBubble === this ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.5)';
-        ctx.lineWidth = hoveredBubble === this ? 4 : 2;
-        ctx.stroke();
+
+        if (hoveredBubble === this) {
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+        } else {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
       }
 
       update() {
@@ -231,9 +183,12 @@
           this.explodeProgress += 0.1;
           this.radius += this.explodeProgress;
           this.opacity -= 0.05;
-          return this.opacity > 0;
+          if (this.opacity <= 0) {
+            return false;
+          }
+        } else {
+          this.y += this.dy;
         }
-        this.y += this.dy;
         return true;
       }
 
@@ -248,6 +203,11 @@
           this.explodeProgress = 5;
           this.opacity = 1;
         }
+      }
+
+      isHovered(mx, my) {
+        const distance = Math.hypot(this.x - mx, this.y - my);
+        return distance <= this.radius;
       }
     }
 
@@ -272,37 +232,23 @@
 
             document.getElementById('player-entry').style.display = 'none';
           } else {
-            showMessage('Username is already taken, please choose another one!');
+            alert('Username is already taken, please choose another one!');
             console.log('Username is already taken, please choose another one!');
+
           }
         });
       }
     });
 
-    // Update leaderboard UI with top 5 players and current player's score
+    // Update leaderboard UI with sorted list
     socket.on('update-leaderboard', (players) => {
-      // Sort players by score in descending order
-      const sortedPlayers = players.sort((a, b) => b.score - a.score);
-
-      // Clear existing leaderboard
       const leaderboard = document.getElementById('player-scores');
       leaderboard.innerHTML = '';
-
-      // Display only top 5 players with their ranks
-      sortedPlayers.slice(0, 5).forEach((player, index) => {
+      players.forEach((player) => {
         const li = document.createElement('li');
-        li.textContent = `${index + 1}. ${player.username}: ${player.score}`;
+        li.textContent = `${player.username}: ${player.score}`;
         leaderboard.appendChild(li);
       });
-
-      // Update current player's score and rank
-      const currentPlayer = sortedPlayers.find(player => player.username.toLowerCase() === username.toLowerCase());
-      const currentScore = currentPlayer ? currentPlayer.score : 0;
-
-      // Determine current player's rank
-      const currentRank = currentPlayer ? sortedPlayers.indexOf(currentPlayer) + 1 : 'N/A';
-
-      document.getElementById('current-player-score').textContent = `You (Rank ${currentRank}): ${currentScore}`;
     });
 
     // Handle mouse clicks
@@ -313,16 +259,10 @@
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
 
-      bubbles.forEach((bubble) => {
+      bubbles.forEach((bubble, index) => {
         if (bubble.isClicked(mx, my)) {
           playerScore += bubble.points;
           bubble.startExplosion();
-
-          // Play the bubble pop sound
-          const sound = document.getElementById('bubble-pop-sound');
-          sound.currentTime = 0; // Reset to start
-          sound.play();
-
           socket.emit('update-score', { username: username.toLowerCase(), score: playerScore });
         }
       });
@@ -331,8 +271,6 @@
     // Game loop
     function gameLoop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height); // Draw the background image
-
       if (Math.random() < 0.03) spawnBubble();
       for (let i = bubbles.length - 1; i >= 0; i--) {
         const bubble = bubbles[i];
@@ -368,12 +306,12 @@
 
     // Notify all clients when a player disconnects
     socket.on('player-disconnected', (data) => {
-      showMessage(`Player ${data.username} is disconnected.`);
+      alert(`${data.username} is disconnected.`);
     });
 
     // Handle the player's own disconnection
     socket.on('disconnect', () => {
-      showMessage("You are disconnected.");
+      alert("You are disconnected.");
       location.reload(); // Reload the browser for the disconnected player
     });
   </script>
