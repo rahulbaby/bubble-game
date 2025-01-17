@@ -95,9 +95,8 @@
 
     /* Fixed leaderboard styling */
     #leaderboard {
-      position: absolute;
-      bottom: 10%;
-      left: 5%;
+      position: fixed;
+      bottom: 8%;
       background-color: rgba(255, 255, 255, 0.8);
       padding: 10px;
       border-radius: 10px;
@@ -144,7 +143,6 @@
     <ul id="player-scores">
       <!-- Top 5 players will be populated here -->
     </ul>
-    <p id="current-player-score" style="font-weight: bold;">You: 0</p>
   </div>
 
   <!-- Bootstrap Modal -->
@@ -178,8 +176,8 @@
     const bubbles = [];
     let playerScore = 0;
     let playerJoined = false;
-    let hoveredBubble = null; // Move hoveredBubble here
-
+    let hoveredBubble = null;
+    let currentRank = 'N/A'; // Initialize current rank
 
     // Load background image
     const backgroundImage = new Image();
@@ -189,6 +187,38 @@
     function showMessage(message) {
       document.getElementById('modalBody').textContent = message;
       $('#messageModal').modal('show');
+    }
+
+    // Update leaderboard UI with top 5 players
+    socket.on('update-leaderboard', (players) => {
+      // Sort players by score in descending order
+      const sortedPlayers = players.sort((a, b) => b.score - a.score);
+
+      // Clear existing leaderboard
+      const leaderboard = document.getElementById('player-scores');
+      leaderboard.innerHTML = '';
+
+      // Display only top 5 players with their ranks
+      sortedPlayers.slice(0, 5).forEach((player, index) => {
+        const li = document.createElement('li');
+        li.textContent = `${index + 1}. ${player.username}: ${player.score}`;
+        leaderboard.appendChild(li);
+      });
+
+      // Update current player's score and rank
+      const currentPlayer = sortedPlayers.find(player => player.username.toLowerCase() === username.toLowerCase());
+      playerScore = currentPlayer ? currentPlayer.score : 0;
+
+      // Determine current player's rank
+      currentRank = currentPlayer ? sortedPlayers.indexOf(currentPlayer) + 1 : 'N/A';
+    });
+
+    // Function to draw player's rank and score on the canvas
+    function drawPlayerRank() {
+      ctx.font = '20px Arial';
+      ctx.fillStyle = 'white';
+      ctx.clearRect(0, 0, canvas.width, 30); // Clear the top area
+      ctx.fillText(`You (Rank ${currentRank}): ${playerScore}`, 10, 20);
     }
 
     // Bubble class
@@ -279,33 +309,7 @@
       }
     });
 
-    // Update leaderboard UI with top 5 players and current player's score
-    socket.on('update-leaderboard', (players) => {
-      // Sort players by score in descending order
-      const sortedPlayers = players.sort((a, b) => b.score - a.score);
-
-      // Clear existing leaderboard
-      const leaderboard = document.getElementById('player-scores');
-      leaderboard.innerHTML = '';
-
-      // Display only top 5 players with their ranks
-      sortedPlayers.slice(0, 5).forEach((player, index) => {
-        const li = document.createElement('li');
-        li.textContent = `${index + 1}. ${player.username}: ${player.score}`;
-        leaderboard.appendChild(li);
-      });
-
-      // Update current player's score and rank
-      const currentPlayer = sortedPlayers.find(player => player.username.toLowerCase() === username.toLowerCase());
-      const currentScore = currentPlayer ? currentPlayer.score : 0;
-
-      // Determine current player's rank
-      const currentRank = currentPlayer ? sortedPlayers.indexOf(currentPlayer) + 1 : 'N/A';
-
-      document.getElementById('current-player-score').textContent = `You (Rank ${currentRank}): ${currentScore}`;
-    });
-
-    // Handle mouse clicks
+    // Handle mouse clicks on the canvas
     canvas.addEventListener('click', (e) => {
       if (!playerJoined) return; // Ensure the player is joined before interacting
 
@@ -339,6 +343,8 @@
         if (!bubble.update()) bubbles.splice(i, 1);
         else bubble.draw();
       }
+
+      drawPlayerRank(); // Draw the player's rank and score on the canvas
       requestAnimationFrame(gameLoop);
     }
     gameLoop();
