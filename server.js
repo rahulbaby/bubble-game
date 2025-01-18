@@ -51,7 +51,7 @@ io.on('connection', (socket) => {
     console.log(`Player ${data.username} joined the game.`);
 
     // Emit a player-joined event to all clients
-    io.emit('player-joined', { username: data.username });
+    // io.emit('player-joined', { username: data.username });
   });
 
   // Update player score

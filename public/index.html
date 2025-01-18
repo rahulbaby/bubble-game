@@ -127,8 +127,9 @@
   <div id="player-entry">
     <div>
       <h2 style="text-align:center">RULES</h2>
-      <p style="color: #000; font-size:12px;">Locking the mobile or PC screen will result in the game being disconnected.</p>
-      <p style="color: #000; font-size:12px;">If the player disconnects from the game, their score will be reset to zero, and they will be required to restart from the beginning.</p>
+      <p style="color: #000; font-size:12px;"><b>1. Locking</b> the <b>mobile or PC</b> screen will result in the game being <b>disconnected.</b></p>
+      <p style="color: #000; font-size:12px;"><b>2.</b> The score for each bubble is as follows: <b>green = 1, blue = 2, and red = 5.</b></p>
+      <p style="color: #000; font-size:12px;"><b>3.</b> If the <b>player  disconnects </b> from the game, their <b>score</b> will be <b>reset </b>to <b>zero</b>, and they will be required to <b>restart</b> from the <b>beginning</b></p>
     </div>
     <input type="text" id="username" placeholder="Enter your name" />
     <button id="join-game">Join Game</button>
@@ -147,26 +148,8 @@
     </ul>
   </div>
 
-  <!-- Bootstrap Modal -->
-  <div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="messageModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="messageModalLabel">Message</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body" id="modalBody">
-          <!-- Message will be injected here -->
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Message display area -->
+  <div id="message-area"></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
@@ -186,11 +169,17 @@
     const backgroundImage = new Image();
     backgroundImage.src = 'space.jpg'; // Path to your background image
 
-    // Function to show message in Bootstrap modal
-    function showMessage(message) {
-      document.getElementById('modalBody').textContent = message;
-      $('#messageModal').modal('show');
-    }
+    // Function to show message in the message area
+    // function showMessage(message) {
+    //   const messageArea = document.getElementById('message-area');
+    //   messageArea.textContent = message;
+    //   messageArea.style.display = 'block';
+
+    //   // Auto-hide message after 3 seconds
+    //   setTimeout(() => {
+    //     messageArea.style.display = 'none';
+    //   }, 3000);
+    // }
 
     // Update leaderboard UI with top 5 players
     socket.on('update-leaderboard', (players) => {
@@ -304,6 +293,10 @@
           if (response.isAvailable) {
             playerJoined = true;
             username = inputUsername;
+
+            // Show welcome message to the current player only
+            // showMessage(`Welcome: ${username}`);
+
             socket.emit('join', { username });
 
             document.getElementById('player-entry').style.display = 'none';
@@ -380,9 +373,11 @@
     });
 
     // Show message when a player joins
-    socket.on('player-joined', (data) => {
-      showMessage(`New Player Joined😁: ${data.username}`);
-    });
+    // socket.on('player-joined', (data) => {
+    //   if (!playerJoined) { // Only show to other players
+    //     showMessage(`A Player Joined: ${data.username}`);
+    //   }
+    // });
 
     // Handle the player's own disconnection
     socket.on('disconnect', () => {
