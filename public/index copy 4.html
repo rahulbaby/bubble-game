@@ -1,3 +1,4 @@
+<!-- LATEST VERSION FROM DATE 18-JAN-25 16:21 -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -379,13 +380,14 @@
       resizeTimeout = setTimeout(resizeCanvas, 100);
     });
 
-    // Show message when a player joins
-    socket.on('player-joined', (data) => {
-      showMessage(`New Player Joined😁: ${data.username}`);
+    // Notify all clients when a player disconnects
+    socket.on('player-disconnected', (data) => {
+      showMessage(`Player ${data.username} is disconnected.`);
     });
 
     // Handle the player's own disconnection
     socket.on('disconnect', () => {
+      showMessage("You are disconnected.");
       location.reload(); // Reload the browser for the disconnected player
     });
   </script>
