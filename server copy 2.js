@@ -1,4 +1,4 @@
-// <!-- LATEST VERSION FROM DATE 18-JAN-25 16:36 -->
+// <!-- LATEST VERSION FROM DATE 19-JAN-25 14:00 -->
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -51,7 +51,7 @@ io.on('connection', (socket) => {
     console.log(`Player ${data.username} joined the game.`);
 
     // Emit a player-joined event to all clients
-    io.emit('player-joined', { username: data.username });
+    // io.emit('player-joined', { username: data.username });
   });
 
   // Update player score

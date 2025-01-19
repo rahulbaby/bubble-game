@@ -1,3 +1,4 @@
+<!-- LATEST UPDATE ON JAN 19, 2022 14:00 -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -57,6 +58,16 @@
       outline: none;
       background-color: #f9fbff;
       transition: all 0.3s ease;
+      word-wrap: break-word;
+      /* Allow text to wrap */
+      overflow-wrap: break-word;
+      /* Wrap text */
+    }
+
+    .h1Title {
+      margin-top: 10px;
+      color: coral;
+      text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
     }
 
     input[type="text"]:focus {
@@ -100,7 +111,8 @@
       padding: 10px;
       border-radius: 10px;
       max-width: 200px;
-      display: none; /* Hide leaderboard initially */
+      display: none;
+      /* Hide leaderboard initially */
     }
 
     #leaderboard p {
@@ -119,6 +131,12 @@
       padding: 5px 0;
       font-size: 16px;
       font-weight: bold;
+      word-wrap: break-word;
+      /* Allow text to wrap */
+      overflow-wrap: break-word;
+      /* Wrap text */
+      max-width: 100%;
+      /* Prevent exceeding parent width */
     }
   </style>
 </head>
@@ -127,14 +145,23 @@
   <div id="player-entry">
     <div>
       <h2 style="text-align:center">RULES</h2>
-      <p style="color: #000; font-size:12px;"><b>1. Locking</b> the <b>mobile or PC</b> screen will result in the game being <b>disconnected.</b></p>
-      <p style="color: #000; font-size:12px;"><b>2.</b> The score for each bubble is as follows: <b>green = 1, blue = 2, and red = 5.</b></p>
-      <p style="color: #000; font-size:12px;"><b>3.</b> If the <b>player  disconnects </b> from the game, their <b>score</b> will be <b>reset </b>to <b>zero</b>, and they will be required to <b>restart</b> from the <b>beginning</b></p>
+      <p style="color: #000; font-size:12px;"><b>1. Players</b> must use their <b>Instagram ID</b> to <b> join </b> and
+        <b> claim </b> the prize.</p>
+      <p style="color: #000; font-size:12px;"><b>2. Locking</b> the <b>mobile or PC</b> screen will result in the game
+        being <b>disconnected.</b></p>
+      <p style="color: #000; font-size:12px;"><b>3.</b> The score for each bubble is as follows: <b>green = 1, blue = 2,
+          and red = 5.</b></p>
+      <p style="color: #000; font-size:12px;"><b>4.</b> If the <b>player disconnects </b> from the game, their
+        <b>score</b> will be <b>reset </b>to <b>zero</b>, and they will be required to <b>restart</b> from the
+        <b>beginning</b>
+      </p>
     </div>
-    <input type="text" id="username" placeholder="Enter your name" />
+    <input type="text" id="username" placeholder="Enter your name" maxlength="30" />
     <button id="join-game">Join Game</button>
   </div>
-
+  <div class="title">
+    <h1 class="h1Title">BUBBLE BLASTER</h1>
+  </div>
   <canvas id="game-canvas"></canvas>
 
   <!-- Audio for bubble pop effect -->
@@ -148,9 +175,6 @@
     </ul>
   </div>
 
-  <!-- Message display area -->
-  <div id="message-area"></div>
-
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
@@ -161,25 +185,53 @@
     const bubbles = [];
     let playerScore = 0;
     let playerJoined = false;
-    let hoveredBubble = null;
     let currentRank = 'N/A'; // Initialize current rank
     let totalPlayers = 0; // Variable to track total number of players
+    const badWords = ['badword1', 'badword2', 'badword3']; // Add bad words here
 
     // Load background image
     const backgroundImage = new Image();
     backgroundImage.src = 'space.jpg'; // Path to your background image
 
-    // Function to show message in the message area
-    // function showMessage(message) {
-    //   const messageArea = document.getElementById('message-area');
-    //   messageArea.textContent = message;
-    //   messageArea.style.display = 'block';
+    // Function to validate username
+    function validateUsername(name) {
+      const regex = /^[a-zA-Z0-9._]+$/; // Only allow letters, numbers, periods, and underscores
+      return regex.test(name);
+    }
 
-    //   // Auto-hide message after 3 seconds
-    //   setTimeout(() => {
-    //     messageArea.style.display = 'none';
-    //   }, 3000);
-    // }
+    // Function to check for bad words
+    function containsBadWords(name) {
+      return badWords.some(badWord => name.toLowerCase().includes(badWord));
+    }
+
+    // Check username availability before joining the game
+    document.getElementById('join-game').addEventListener('click', () => {
+      const inputUsername = document.getElementById('username').value.trim();
+      if (inputUsername && !playerJoined) {
+        if (!validateUsername(inputUsername)) {
+          console.log('Username can only include letters, numbers, periods, and underscores.');
+          return;
+        }
+        if (containsBadWords(inputUsername)) {
+          console.log('Username contains inappropriate words.');
+          return;
+        }
+
+        socket.emit('check-username', { username: inputUsername }, (response) => {
+          if (response.isAvailable) {
+            playerJoined = true;
+            username = inputUsername;
+
+            socket.emit('join', { username });
+
+            document.getElementById('player-entry').style.display = 'none';
+            document.getElementById('leaderboard').style.display = 'block'; // Show leaderboard after joining
+          } else {
+            console.log('Username is already taken, please choose another one!');
+          }
+        });
+      }
+    });
 
     // Update leaderboard UI with top 5 players
     socket.on('update-leaderboard', (players) => {
@@ -195,7 +247,9 @@
       // Display only top 5 players with their ranks
       sortedPlayers.slice(0, 5).forEach((player, index) => {
         const li = document.createElement('li');
-        li.textContent = `${index + 1}. ${player.username}: ${player.score}`;
+        // Show only the first 10 characters followed by "..."
+        const displayName = player.username.length > 10 ? player.username.substring(0, 10) + '...' : player.username;
+        li.textContent = `${index + 1}. ${displayName}: ${player.score}`;
         leaderboard.appendChild(li);
       });
 
@@ -246,8 +300,8 @@
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = this.type === 'green' ? '#8EF5A3' : this.type === 'yellow' ? '#FFEB77' : '#FF9494';
         ctx.fill();
-        ctx.strokeStyle = hoveredBubble === this ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.5)';
-        ctx.lineWidth = hoveredBubble === this ? 4 : 2;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 2;
         ctx.stroke();
       }
 
@@ -284,30 +338,6 @@
       const type = types[Math.floor(Math.random() * types.length)];
       bubbles.push(new Bubble(x, y, type));
     }
-
-    // Check username availability before joining the game
-    document.getElementById('join-game').addEventListener('click', () => {
-      const inputUsername = document.getElementById('username').value.trim();
-      if (inputUsername && !playerJoined) {
-        socket.emit('check-username', { username: inputUsername }, (response) => {
-          if (response.isAvailable) {
-            playerJoined = true;
-            username = inputUsername;
-
-            // Show welcome message to the current player only
-            // showMessage(`Welcome: ${username}`);
-
-            socket.emit('join', { username });
-
-            document.getElementById('player-entry').style.display = 'none';
-            document.getElementById('leaderboard').style.display = 'block'; // Show leaderboard after joining
-          } else {
-            showMessage('Username is already taken, please choose another one!');
-            console.log('Username is already taken, please choose another one!');
-          }
-        });
-      }
-    });
 
     // Handle mouse clicks on the canvas
     canvas.addEventListener('click', (e) => {
@@ -371,13 +401,6 @@
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(resizeCanvas, 100);
     });
-
-    // Show message when a player joins
-    // socket.on('player-joined', (data) => {
-    //   if (!playerJoined) { // Only show to other players
-    //     showMessage(`A Player Joined: ${data.username}`);
-    //   }
-    // });
 
     // Handle the player's own disconnection
     socket.on('disconnect', () => {
