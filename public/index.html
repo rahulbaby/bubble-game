@@ -1,4 +1,3 @@
-<!-- LATEST UPDATE ON JAN 19, 2022 18:00 -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -25,8 +24,24 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      /* background: linear-gradient(135deg, #6a11cb, #2575fc); */
       overflow: hidden;
+    }
+
+    .blur {
+      filter: blur(5px);
+      /* Blur effect */
+      pointer-events: none;
+      /* Make canvas unclickable */
+    }
+
+    /* Timer Styles */
+    #timer {
+      position: relative;
+      top: 20px;
+      right: 20px;
+      font-size: 24px;
+      color: red;
+      font-weight: bold;
     }
 
     /* Smaller Join Game Modal */
@@ -58,10 +73,6 @@
       outline: none;
       background-color: #f9fbff;
       transition: all 0.3s ease;
-      word-wrap: break-word;
-      /* Allow text to wrap */
-      overflow-wrap: break-word;
-      /* Wrap text */
     }
 
     .h1Title {
@@ -107,8 +118,6 @@
 
     /* Fixed leaderboard styling */
     #leaderboard {
-      /* position: fixed; */
-      /* bottom: 24%; */
       background-color: rgb(7, 0, 0);
       box-shadow: 12px 14px 14px rgb(103 103 103);
       padding: 10px;
@@ -116,7 +125,6 @@
       max-width: 200px;
       display: none;
       color: white;
-      /* Hide leaderboard initially */
     }
 
     #leaderboard p {
@@ -135,36 +143,22 @@
       padding: 5px 0;
       font-size: 16px;
       font-weight: bold;
-      word-wrap: break-word;
-      /* Allow text to wrap */
-      overflow-wrap: break-word;
-      /* Wrap text */
-      max-width: 100%;
-      /* Prevent exceeding parent width */
     }
   </style>
 </head>
 
 <body>
+  <!-- Timer Display -->
+  <div id="timer">Time left: <span id="countdown"></span></div>
+
   <!-- THE TOP PART, CANVAS SECTION -->
   <section class="top">
     <div id="player-entry">
-      <div>
-        <h2 style="text-align:center">RULES</h2>
-        <p style="color: #000; font-size:12px;"><b>1. Players</b> must use their <b>Instagram ID</b> to <b> join </b>
-          and
-          <b> claim </b> the prize.
-        </p>
-        <p style="color: #000; font-size:12px;"><b>2. Locking</b> the <b>mobile or PC</b> screen will result in the game
-          being <b>disconnected.</b></p>
-        <p style="color: #000; font-size:12px;"><b>3.</b> The score for each bubble is as follows: <b>green = 1, blue =
-            2,
-            and red = 5.</b></p>
-        <p style="color: #000; font-size:12px;"><b>4.</b> If the <b>player disconnects </b> from the game, their
-          <b>score</b> will be <b>reset </b>to <b>zero</b>, and they will be required to <b>restart</b> from the
-          <b>beginning</b>
-        </p>
-      </div>
+      <h2 style="text-align:center">RULES</h2>
+      <p><b>1.</b> Players must use their Instagram ID to join and claim the prize.</p>
+      <p><b>2.</b> Locking the screen will result in disconnection.</p>
+      <p><b>3.</b> Score: green = 1, blue = 2, red = 5.</p>
+      <p><b>4.</b> Disconnecting resets score to zero.</p>
       <input type="text" id="username" placeholder="Enter your name" maxlength="30" />
       <button id="join-game">Join Game</button>
     </div>
@@ -173,37 +167,71 @@
     </div>
     <canvas id="game-canvas"></canvas>
   </section>
+
   <!-- THE BOTTOM PART, GAME LEADERBOARD SECTION -->
   <section class="bottom">
-    <!-- Audio for bubble pop effect -->
     <audio id="bubble-pop-sound" src="bubble-pop.mp3" preload="auto"></audio>
-
-    <!-- Leaderboard -->
     <div id="leaderboard">
       <p>Ranking</p>
-      <ul id="player-scores">
-        <!-- Top 5 players will be populated here -->
-      </ul>
+      <ul id="player-scores"></ul>
     </div>
   </section>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-
     let username = null;
     let canvas = document.getElementById('game-canvas');
     let ctx = canvas.getContext('2d');
     const bubbles = [];
     let playerScore = 0;
     let playerJoined = false;
-    let currentRank = 'N/A'; // Initialize current rank
-    let totalPlayers = 0; // Variable to track total number of players
-    const badWords = ['badword1', 'badword2', 'badword3']; // Add bad words here
+    let currentRank = 'N/A';
+    let totalPlayers = 0;
+    const badWords = ['badword1', 'badword2', 'badword3'];
+
+    // Countdown Timer Logic
+    function startTimer() {
+      const targetTime = new Date();
+      targetTime.setHours(17, 13, 0); // Set target time to today at 16:38
+
+      const interval = setInterval(() => {
+        const now = new Date();
+        const timeLeft = targetTime - now;
+
+        if (timeLeft < 0) {
+          clearInterval(interval);
+          document.getElementById('countdown').textContent = 'Time is up!';
+          document.getElementById('game-canvas').classList.add('blur');
+          document.getElementById('game-canvas').style.pointerEvents = 'none'; // Prevent clicks
+          showLeaderboard(); // Function to show the current leaderboard
+          return;
+        }
+
+        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+        document.getElementById('countdown').textContent = `${hours}h ${minutes}m ${seconds}s`;
+      }, 1000);
+    }
+
+    // Function to display the leaderboard without blurring
+    // Function to display the leaderboard without blurring
+    function showLeaderboard() {
+      const leaderboard = document.getElementById('leaderboard');
+      const playerEntry = document.getElementById('player-entry');
+
+      playerEntry.style.display = 'none'; // Hide the player entry section
+      leaderboard.style.display = 'block'; // Show the leaderboard
+    }
+
+    // Start the timer when the page loads
+    window.onload = startTimer;
 
     // Function to validate username
     function validateUsername(name) {
-      const regex = /^[a-zA-Z0-9._]+$/; // Only allow letters, numbers, periods, and underscores
+      const regex = /^[a-zA-Z0-9._]+$/;
       return regex.test(name);
     }
 
@@ -245,28 +273,19 @@
     socket.on('update-leaderboard', (players) => {
       totalPlayers = players.length; // Update total players count
 
-      // Sort players by score in descending order
-      const sortedPlayers = players.sort((a, b) => b.score - a.score);
-
-      // Clear existing leaderboard
       const leaderboard = document.getElementById('player-scores');
       leaderboard.innerHTML = '';
 
-      // Display only top 5 players with their ranks
-      sortedPlayers.slice(0, 5).forEach((player, index) => {
+      players.sort((a, b) => b.score - a.score).slice(0, 5).forEach((player, index) => {
         const li = document.createElement('li');
-        // Show only the first 10 characters followed by "..."
         const displayName = player.username.length > 10 ? player.username.substring(0, 10) + '...' : player.username;
         li.textContent = `${index + 1}. ${displayName}: ${player.score}`;
         leaderboard.appendChild(li);
       });
 
-      // Update current player's score and rank
-      const currentPlayer = sortedPlayers.find(player => player.username.toLowerCase() === username.toLowerCase());
+      const currentPlayer = players.find(player => player.username.toLowerCase() === username.toLowerCase());
       playerScore = currentPlayer ? currentPlayer.score : 0;
-
-      // Determine current player's rank
-      currentRank = currentPlayer ? sortedPlayers.indexOf(currentPlayer) + 1 : 'N/A';
+      currentRank = currentPlayer ? players.indexOf(currentPlayer) + 1 : 'N/A';
     });
 
     // Function to draw player's rank and score on the canvas
@@ -373,7 +392,6 @@
     // Game loop
     function gameLoop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height); // Draw the background image
 
       if (Math.random() < 0.03) spawnBubble();
       for (let i = bubbles.length - 1; i >= 0; i--) {
@@ -387,15 +405,14 @@
     }
     gameLoop();
 
+    // Resize canvas
     function resizeCanvas() {
       const minWidth = 300;  // Minimum width for the canvas
       const minHeight = 400; // Minimum height for the canvas
 
-      // Get the viewport dimensions
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
 
-      // Ensure that the canvas width and height are responsive but respect the minimum size
       canvas.width = Math.max(viewportWidth * 0.8, minWidth);  // Set width to 80% of viewport, or minimum width
       canvas.height = Math.max(viewportHeight * 0.6, minHeight); // Set height to 60% of viewport, or minimum height
     }

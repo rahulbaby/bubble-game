@@ -9,6 +9,9 @@ const io = socketIo(server);
 
 let players = [];
 let takenUsernames = new Set(); // Set to store lowercase usernames for case-insensitive matching
+let startTime; // To track when the timer starts
+let timerInterval; // To hold the interval for the timer
+let countdownDuration = 600; // 10 minutes in seconds
 
 app.use(express.static('public')); // Serve static files from the 'public' folder
 
@@ -50,8 +53,26 @@ io.on('connection', (socket) => {
     io.emit('update-leaderboard', sortPlayers());
     console.log(`Player ${data.username} joined the game.`);
 
-    // Emit a player-joined event to all clients
-    // io.emit('player-joined', { username: data.username });
+    // Start the timer when the first player joins
+    if (players.length === 1) {
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const currentTime = Date.now();
+        const elapsed = Math.floor((currentTime - startTime) / 1000);
+        const remainingTime = Math.max(0, countdownDuration - elapsed);
+
+        io.emit('update-timer', remainingTime);
+
+        if (remainingTime <= 0) {
+          clearInterval(timerInterval);
+          const sortedPlayers = sortPlayers();
+
+          // Emit a game-over event with the sorted players
+          io.emit('game-over', sortedPlayers);
+          console.log('Game Over! Final scores:', sortedPlayers.slice(0, 5)); // Log top 5 players
+        }
+      }, 1000);
+    }
   });
 
   // Update player score
